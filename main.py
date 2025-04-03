@@ -7,6 +7,12 @@ from commands.search import search
 from commands.imagegen import imagegen
 from commands.music import music
 from commands.mcp import mcp
+try:
+    import bs4
+    print("✅ bs4 installed")
+except ImportError:
+    print("❌ bs4 not installed")
+
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
