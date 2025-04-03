@@ -3,7 +3,7 @@ import google.generativeai as genai
 import os
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 @commands.command()
 async def ask(ctx, *, prompt: str):
