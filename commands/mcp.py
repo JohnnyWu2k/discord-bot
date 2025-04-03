@@ -11,13 +11,13 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 async def mcp(ctx, *, query: str):
     await ctx.send(f"🧠 MCP 啟動中，目標：{query}")
     try:
-        # Step 1: Gemini 轉關鍵字
+        # Step 1: Gemini 將問題轉為關鍵字
         search_prompt = f"請將這句話轉成搜尋引擎用的精簡關鍵字：'{query}'"
         search_term = model.generate_content(search_prompt).text.strip()
 
         await ctx.send(f"🔍 搜尋中：{search_term}")
 
-        # Step 2: DuckDuckGo 搜尋
+        # Step 2: DuckDuckGo 搜尋結果
         url = f"https://html.duckduckgo.com/html/?q={search_term}"
         headers = {"User-Agent": "Mozilla/5.0"}
         res = requests.get(url, headers=headers)
@@ -36,21 +36,27 @@ async def mcp(ctx, *, query: str):
 
         await ctx.send(f"🔗 最佳結果：{target_url}")
 
-        # Step 3: 擷取網頁內容
+        # Step 3: 擷取整個網頁所有段落
         content_res = requests.get(target_url, headers=headers, timeout=10)
         content_soup = BeautifulSoup(content_res.text, "html.parser")
         paragraphs = content_soup.find_all("p")
-        raw_text = " ".join(p.get_text() for p in paragraphs[:5])  # 擷取前幾段
+        all_text = " ".join(p.get_text() for p in paragraphs)
 
-        if len(raw_text) < 100:
-            await ctx.send("⚠️ 抓到的內容太少，無法摘要。")
-            return
+        if len(all_text) < 100:
+            await ctx.send("⚠️ 網頁資料過少，AI 將嘗試根據有限資訊推論。")
 
-        # Step 4: Gemini 摘要
-        summary_prompt = f"以下是從網頁擷取的資料，請幫我摘要並以中文說明：\n{raw_text}"
+        elif len(all_text) > 12000:
+            all_text = all_text[:12000]
+            await ctx.send("⚠️ 網頁內容過長，已截取前 12000 字處理。")
+
+        # Step 4: Gemini 生成摘要與回答
+        summary_prompt = f"以下是某個網站的全部文章內容，請你幫我摘要重點，並用中文整理給我（可推論補充）：\n{all_text}"
         summary = model.generate_content(summary_prompt).text.strip()
 
-        # Step 5: 回傳結果
-        await ctx.send(f"📄 回覆：\n{summary[:1800]}")  # 預防超過 Discord 字數限制
+        # Step 5: 回傳總結
+        chunks = [summary[i:i+1800] for i in range(0, len(summary), 1800)]
+        for chunk in chunks:
+            await ctx.send(chunk)
+
     except Exception as e:
         await ctx.send(f"❌ 發生錯誤：{e}")
