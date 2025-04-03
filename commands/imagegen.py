@@ -3,7 +3,7 @@ import google.generativeai as genai
 import os
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-pro-vision")
+model = genai.GenerativeModel("gemini-2.0-flash-exp-image-generation")
 
 @commands.command()
 async def imagegen(ctx, *, prompt: str):
